@@ -15,3 +15,4 @@ Zoom info: https://duke.zoom.us/my/luanalima
 
 Ananya Aggarwal
 ananya.aggarwal@duke.edu
+1st year MEM (EE and CEEJ)
