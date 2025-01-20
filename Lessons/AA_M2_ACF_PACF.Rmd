@@ -108,11 +108,11 @@ In this course we will also use *autoplot()* which is a ggplot() for time series
 Many of the functions we will use require a time series object. You can transform your data in a time series using the function *ts()*. Only the columns with reservoir inflow data should be transformed, not the ones with month and year. Your ts object is not a data frame, but like I said we will need it as a ts for some function we will explore in future scripts.
 
 ```{r}
-ts_inflow_data <- ts(inflow_data$HP1, start=c(1931,1), frequency=12)
+#ts_inflow_data <- ts(inflow_data$HP1, start=c(1931,1), frequency=12)
 # need to exclude datetime column from this conversion
 # frequency of 12 helps calculate the seasonality in the data, which is at a monthly level
 
-#ts_inflow_data <- ts(inflow_data[,2:4], start=c(1931,1), frequency=12)
+ts_inflow_data <- ts(inflow_data[,2:4], start=c(1931,1), frequency=12)
 
 ts_inflow_data
 
