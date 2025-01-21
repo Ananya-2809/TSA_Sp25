@@ -143,6 +143,8 @@ HP1_pacf=pacf(ts_inflow_data[,1],lag=60)
 HP1_acf=Acf(ts_inflow_data[,1],lag=60)
 
 HP1_pacf=Pacf(ts_inflow_data[,1],lag=60)
+
+#anything within the blue dotted lines are not statistically different from 0 (what does this mean?)
   
 ```
 

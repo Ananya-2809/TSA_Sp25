@@ -44,12 +44,15 @@ Consider the data provided in the spreadsheet "Table_10.1_Renewable_Energy_Produ
 
 ```{r}
 #Importing data set
+#any kind of cleaning up of downloaded data needs to be done in R itself to make the code reproducible
+#avoid manual adjustments in the excel/csv
 getwd()
 energy_data <- read.xlsx(xlsxFile="../Data/Table_10.1_Renewable_Energy_Production_and_Consumption_by_Source.xlsx",
                          sheet="Monthly Data",
                          startRow=13,
                          colNames=FALSE)
 
+#this dataset has sort of two headers (name of the variable and then the units)
 read_colnames <- read.xlsx(xlsxFile="../Data/Table_10.1_Renewable_Energy_Production_and_Consumption_by_Source.xlsx",
                          sheet="Monthly Data",
                          rows=11,
@@ -65,6 +68,7 @@ head(energy_data)
 You will work only with the following columns: Total Biomass Energy Production, Total Renewable Energy Production, Hydroelectric Power Consumption. Create a data frame structure with these three time series only. Use the command head() to verify your data.
 
 ```{r}
+#filtering the dataset
 energy_data_trim <- energy_data[,c(1,4:6)]
 head(energy_data_trim)
 ```
@@ -74,6 +78,7 @@ head(energy_data_trim)
 Transform your data frame in a time series object and specify the starting point and frequency of the time series using the function ts().
 
 ```{r}
+#one time series object with all three (and then loop).. or three separate variables - any works
 
 ```
 
@@ -90,6 +95,7 @@ Compute mean and standard deviation for these three series.
 Display and interpret the time series plot for each of these variables. Try to make your plot as informative as possible by writing titles, labels, etc. For each plot add a horizontal line at the mean of each series in a different color.
 
 ```{r}
+#interpreting - trends (up, down, stable), absolute values..
 
 ```
 
@@ -98,6 +104,7 @@ Display and interpret the time series plot for each of these variables. Try to m
 Compute the correlation between these three series. Are they significantly correlated? Explain your answer.
 
 ```{r}
+#not autocorrelation! Corr(time_series_object) --> correlation matrix (+/-1)
 
 ```
 
@@ -106,6 +113,8 @@ Compute the correlation between these three series. Are they significantly corre
 Compute the autocorrelation function from lag 1 up to lag 40 for these three variables. What can you say about these plots? Do the three of them have the same behavior?
 
 ```{r}
+#trends - decaying, seasonality?, similarities (shapes & formats)?
+#talk about the autocorr numbers themselves..?
 
 ```
 
@@ -114,6 +123,7 @@ Compute the autocorrelation function from lag 1 up to lag 40 for these three var
 Compute the partial autocorrelation function from lag 1 to lag 40 for these three variables. How these plots differ from the ones in Q6?
 
 ```{r}
+#
 
 ```
 
