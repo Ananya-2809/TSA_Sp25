@@ -1,0 +1,78 @@
+---
+title: "Import Data - ACF - PACF"
+author: "Luana Lima"
+output: pdf_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Setting R code chunk options
+
+The first R code chunk is named **setup**. Here we are setting the options for R code chunks. The choice echo=TRUE means both code and output will appear on report. If for a specific chunk you want different options, you can always change that on the first line as we did in the following chunk. We chose include=FALSE which means that nothing related to this chunk (code and output) will appear on the knitted file.
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(echo = TRUE) 
+```
+
+
+## Loading packages and initializing
+
+It's useful to designate one code chunk to load packages on the beginning of the file. You can always add to this chunk as needed. But concentrate the packages needed on only one chunk.
+
+```{r package, include=FALSE}
+library(lubridate)
+library(ggplot2)
+library(forecast) #added for Acf and Pacf functions
+
+```
+
+## Importing data
+
+For this first example we will import water inflow data for reservoirs in Brazil. We have data for 15 different reservoirs spread all over the country. To import a .txt, .csv or .xlsx file you can use the function *read.table()*. This function will store the data as a data frame and has useful inputs such as
+
+* *file = * : use this input to point to yoru data file. If it's on the same folder as your .Rmd then you only need to write the file name. But if it's on another folder you need to point to the path were file is located;
+* *header =* : if your file has a header you should set this to TRUE, o.w. FALSE;
+* *skip =* : if your file has rows explaining the data or any other rows on the top that need to be skipped you should just set skip to be equal to the number of row that should be skipped before reading the data. Mote that if header=TRUE, you should not skip the row with the header. The default is *skip=0*;
+* *dec =* : define *dec="."* or *dec=","* depending on how it's defined on your set. The default is ".".
+
+```{r}
+#Option 2: import using shortcut "." or ".." or relative path
+# the "." will point to the folder set as current directory
+# the ".." will point to your parent folder set as current directory
+
+#check which folder is your current directory using function getwd()
+getwd()
+raw_temp_data <- read.table(file="./Data/learning acf and pacf.txt",header=FALSE,skip=0)
+
+#If you want specific columns just trim the table
+raw_temp_data <- raw_temp_data[,1:2] #the space before the comma means you want all rows
+                                 #and 1:5 means all columns from 1 to 5
+#nhydro <- ncol(raw_inflow_data)-2
+#nobs <- nrow(raw_inflow_data) 
+
+#If your file does not have header like this one you can add column names after creating the data frame
+colnames(raw_temp_data)=c("Day","Temp")
+
+#Checking data
+head(raw_temp_data)
+str(raw_temp_data)
+```
+
+## Date or time period (just have one dimension - days)
+
+
+## Transforming data into time series object (already in that format)
+
+
+## Plotting ACF and PACF
+
+There are multiple ways to get acf and pacf plots in R. The default package "stats" have the functions acf() and pacf(). Another option is with the functions Acf() and Pacf() from package "forecast". Package forecast is not a default package. So you need to install and load it on the beginning of your scripts. 
+
+```{r acf}
+temp_acf=Acf(raw_temp_data[,2], lag=10)
+temp_acf
+
+#HP1_pacf=Pacf(ts_inflow_data[,1],lag=60)
+  
+```
+
