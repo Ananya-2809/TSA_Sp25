@@ -141,6 +141,7 @@ Let's identify and remove trend component. You start by fitting a linear model t
 
 
 #Fit a linear trend to TS of iHP
+#lm() from package 'stats', where lm = linear model
 
 
 ```
@@ -162,6 +163,8 @@ Now let's shift attention to the seasonal component.
 
 ```{r}
 #Use seasonal means model
+#seasonaldummy fn. and run a simple regression on the dummies using lm
+#only works if Y is a time series and if frequency is specified
 
 
 ```
