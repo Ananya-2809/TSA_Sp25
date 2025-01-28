@@ -1,9 +1,15 @@
 ---
 title: "ENV 790.30 - Time Series Analysis for Energy Data | Spring 2025"
-subtitle: "Assignment 2 - Due date 01/23/25"
 author: "Ananya Aggarwal"
-output: pdf_document
+subtitle: Assignment 2 - Due date 01/28/25
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+  word_document: default
 geometry: margin=2.54cm
+editor_options:
+  chunk_output_type: inline
 ---
 
 ## Submission Instructions
@@ -18,8 +24,9 @@ When you have completed the assignment, **Knit** the text and code into a single
 
 ## Setting R code chunk options
 
-```{r setup, include=FALSE} 
-knitr::opts_chunk$set(echo = TRUE,tidy.opts=list(width.cutoff=60), tidy=TRUE) 
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE) 
 #the tidy arguments prevent the code from running off the page i.e. wrap by itself
 
 ```
@@ -29,11 +36,13 @@ knitr::opts_chunk$set(echo = TRUE,tidy.opts=list(width.cutoff=60), tidy=TRUE)
 R packages needed for this assignment:"forecast","tseries", and "dplyr". Install these packages, if you haven't done yet. Do not forget to load them before running your script, since they are NOT default packages.\\
 
 ```{r package, message=FALSE}
+
 #Load/install required package here
 library(forecast)
 library(tseries)
 library(dplyr)
 library(openxlsx)
+library(ggplot2)
 
 ```
 
@@ -43,6 +52,7 @@ library(openxlsx)
 Consider the data provided in the spreadsheet "Table_10.1_Renewable_Energy_Production_and_Consumption_by_Source.xlsx" on our **Data** folder. The data comes from the US Energy Information and Administration and corresponds to the December 2023 Monthly Energy Review. The spreadsheet is ready to be used. You will also find a $.csv$ version of the data "Table_10.1_Renewable_Energy_Production_and_Consumption_by_Source-Edit.csv". You may use the function $read.table()$ to import the $.csv$ data in R. Or refer to the file "M2_ImportingData_CSV_XLSX.Rmd" in our Lessons folder for functions that are better suited for importing the $.xlsx$.
 
 ```{r}
+
 #Importing data set
 #any kind of cleaning up of downloaded data needs to be done in R itself to make the code reproducible
 #avoid manual adjustments in the excel/csv
@@ -58,27 +68,42 @@ read_colnames <- read.xlsx(xlsxFile="../Data/Table_10.1_Renewable_Energy_Product
                          rows=11,
                          colNames=FALSE)
 
+#converting the date-time format from the excel format to month-year
+energy_data[,1] <- as.Date(energy_data[,1], origin = "1899-12-30")
+
 colnames(energy_data) <- read_colnames
 
 head(energy_data)
+
 ```
 
 
 ## Question 1
 You will work only with the following columns: Total Biomass Energy Production, Total Renewable Energy Production, Hydroelectric Power Consumption. Create a data frame structure with these three time series only. Use the command head() to verify your data.
 
+### Answer 1
+
 ```{r}
+
 #filtering the dataset
-energy_data_trim <- energy_data[,c(1,4:6)]
+energy_data_trim <- energy_data[,c("Month","Total Biomass Energy Production", 
+                                    "Total Renewable Energy Production", 
+                                    "Hydroelectric Power Consumption")]
 head(energy_data_trim)
+
 ```
 
 
 ## Question 2
 Transform your data frame in a time series object and specify the starting point and frequency of the time series using the function ts().
 
+### Answer 2
+
 ```{r}
-#one time series object with all three (and then loop).. or three separate variables - any works
+
+#creating one object with all three time series
+ts_energy_data <- ts(energy_data_trim[,2:4], start = c(1973, 1), frequency = 12)
+head(ts_energy_data)
 
 ```
 
@@ -86,7 +111,27 @@ Transform your data frame in a time series object and specify the starting point
 ## Question 3
 Compute mean and standard deviation for these three series.
 
+### Answer 3
+
 ```{r}
+
+series <- c("Total Biomass Energy Production", 
+             "Total Renewable Energy Production", 
+             "Hydroelectric Power Consumption")
+
+means <- c()
+stdevs <- c()
+
+for (i in series) {
+  means[i] <- mean(ts_energy_data[, i])
+  stdevs[i] <- sd(ts_energy_data[, i])
+}
+
+for (i in series) {
+  cat(i, "\n")
+  cat("Mean: ", means[i], "\n")
+  cat("Std.Deviation: ", stdevs[i], "\n\n")
+}
 
 ```
 
@@ -94,37 +139,96 @@ Compute mean and standard deviation for these three series.
 ## Question 4
 Display and interpret the time series plot for each of these variables. Try to make your plot as informative as possible by writing titles, labels, etc. For each plot add a horizontal line at the mean of each series in a different color.
 
+### Answer 4
+
 ```{r}
-#interpreting - trends (up, down, stable), absolute values..
+
+autoplot(ts_energy_data) +
+  xlab("Time") +
+  ylab("Production and Consumption (Trillion Btu)") +
+  
+  ggtitle("Time Series of Energy Production and Consumption") +
+  
+  geom_hline(aes(yintercept = means["Total Biomass Energy Production"]),
+             color = "red", linetype = "dashed", size = 1) +
+  geom_hline(aes(yintercept = means["Total Renewable Energy Production"]),
+             color = "green", linetype = "dashed", size = 1) +
+  geom_hline(aes(yintercept = means["Hydroelectric Power Consumption"]),
+             color = "blue", linetype = "dashed", size = 1) + 
+  
+  theme(legend.position = "bottom")
 
 ```
+
+Trend: 
+- Total Energy Production for both Biomass and Renewable Energy shows a non-linear increasing trend, with the period between 1985-2000 showing a stable trend on average.
+- Total Renewable Energy Production, in specific, has grown rapidly post 2002 (from around 300 Trillion Btu to more than 700 Trillion Btu).
+- Hydroelectric Power Consumption shows a stable trend throughout the study period, which can also be seen from a relatively low standard deviation (std.dev. of 14.11 around a mean of 79.55).
+
+Seasonality:
+All three time series seem to have a strong seasonality component to them
+
+Variations:
+- We see the effect of Covid-19 on energy production, where both biomass and renewable energy production saw a significant dip in the beginning of 2020.
+- Hydroelectric power consumption has been lower than average in the past few years (2021-23), probably owing to changes in the precipitation patterns.
+
 
 
 ## Question 5
 Compute the correlation between these three series. Are they significantly correlated? Explain your answer.
 
+### Answer 5
+
 ```{r}
-#not autocorrelation! Corr(time_series_object) --> correlation matrix (+/-1)
+cor(ts_energy_data)
 
 ```
+
+- Total Biomass and Renewable Energy Production show a very strong positive correlation, which suggests that as biomass energy production increase, renewable energy production tends to increase as well, and vice versa. 
+- On the other hand, there is a very weak negative correlation between these energy production datasets and hydroelectric power consumption, indicating changes in hydroelectric power consumption are not influenced by biomass and renewable energy production.
+
 
 
 ## Question 6
 Compute the autocorrelation function from lag 1 up to lag 40 for these three variables. What can you say about these plots? Do the three of them have the same behavior?
 
-```{r}
-#trends - decaying, seasonality?, similarities (shapes & formats)?
-#talk about the autocorr numbers themselves..?
+### Answer 6
+
+```{r, fig.width=8, fig.height=10}
+
+par(mar = c(3,3,3,1)) #adjusting the bottom, left, top, right in-line margins
+par(mfrow=c(3,1))
+
+Acf(ts_energy_data[, "Total Biomass Energy Production"], lag.max = 40, main = "Total Biomass Energy Production")
+Acf(ts_energy_data[, "Total Renewable Energy Production"], lag.max = 40, main = "Total Renewable Energy Production")
+Acf(ts_energy_data[, "Hydroelectric Power Consumption"], lag.max = 40, main = "Hydroelectric Power Consumption")
 
 ```
+
+- For the Total Biomass and Renewable Energy Production timeseries, we see a high positive autocorrelation. However, there is a gradual decrease as the lag increases, suggesting that the influence of past values diminishes over time.
+- The autocorrelation plot for hydroelectric power consumption shows a wave-like pattern, with periodic spikes at a lag of 12. This indicates that there is a seasonal component to the dataset.
+
 
 
 ## Question 7
 Compute the partial autocorrelation function from lag 1 to lag 40 for these three variables. How these plots differ from the ones in Q6?
 
-```{r}
-#
+### Answer 7
+
+```{r, fig.width=8, fig.height=10}
+
+par(mar = c(3,3,3,1)) #adjusting the bottom, left, top, right in-line margins
+par(mfrow=c(3,1))
+
+Pacf(ts_energy_data[, "Total Biomass Energy Production"], lag.max = 40, main = "Total Biomass Energy Production")
+Pacf(ts_energy_data[, "Total Renewable Energy Production"], lag.max = 40, main = "Total Renewable Energy Production")
+Pacf(ts_energy_data[, "Hydroelectric Power Consumption"], lag.max = 40, main = "Hydroelectric Power Consumption")
 
 ```
+
+- To get a clearer picture of the relationship between a time series and its past values, we remove the effect of intermediate lags using the Pacf function
+- The high positive value at lag 1 for all three indicates that the time series are highly dependent on their immediate past values, while the subsequent lags have a weaker correlation.
+- Most lags beyond the first one fall within the confidence bands (the blue-dashed lines), which suggests that the correlations are not statistically significant.
+- Some negative values at later lag values might suggest some cyclical pattern in the data. Especially for hydroelectric power consumption, most of the first 12 values are relevant, and their wave-like pattern suggest that the data is seasonal.
 
 
