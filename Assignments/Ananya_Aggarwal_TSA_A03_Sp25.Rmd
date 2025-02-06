@@ -203,6 +203,8 @@ Note: Blue line is our original series; Red line is our trend; Green line is our
 
 The detrended series fluctuates around zero, which means that the long-term trend has been successfully removed, especially the increasing trend in the case of Total Renewable Energy Production. For the Hydroelectric Power Consumption, we do not see any significant change in the shape of the series (except that it shifted down to the zero line) because its linear trend was relatively flat.
 
+[because we're taking a constant trend over time, when we detrend, the elimination of the constant value from all data points ends up creating another trend for renewable energy production, i.e., places where there was no trend originally, we end up creating a decreasing trend.]
+
 
 ### Q5
 Plot ACF and PACF for the detrended series and compare with the plots from Q1. You may use plot_grid() again to get them side by side, but not mandatory. Did the plots change? How?
@@ -217,6 +219,8 @@ pacf_detrend_hydro <- ggPacf(ts_detrend_hydro) + ggtitle("PACF - Detrended Hydro
 
 plot_grid(acf_renew, acf_detrend_renew, pacf_renew, pacf_detrend_renew,
           acf_hydro, acf_detrend_hydro, pacf_hydro, pacf_detrend_hydro, ncol = 2)
+
+#[use ylim to fix the scale of the y-axis for easier comparison]
 
 ```
 
@@ -337,4 +341,7 @@ ACF:
 PACF:
 - PACF for Renewable Energy Production shows a similar trend as before, but the absolute values have decreased.
 - For Hydroelectric Power Consumption, PACF shows much weaker autocorrelations after lag 1. Most of them lie within the confidence bands, suggesting they are not statistically significant.
+
+[pacf shows the spikes are gone, which means deseasoning did something to our original data. at lag 1, the pacf is 1, which raises suspicion that there is existence of unit root in stochastic analysis]
+
 
