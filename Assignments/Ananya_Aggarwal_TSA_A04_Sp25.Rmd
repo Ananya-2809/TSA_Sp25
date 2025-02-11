@@ -1,7 +1,7 @@
 ---
 title: "ENV 797 - Time Series Analysis for Energy and Environment Applications | Spring 2025"
 subtitle: "Assignment 4 - Due date 02/11/25"
-author: "Student Name"
+author: "Ananya Aggarwal"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
@@ -22,6 +22,11 @@ R packages needed for this assignment: "xlsx" or "readxl", "ggplot2", "forecast"
 
 ```{r message=FALSE, warning=FALSE}
 #Load/install required package here
+library(forecast)
+library(tseries)
+library(openxlsx)
+library(ggplot2)
+library(Kendall) 
 
 ```
 
@@ -30,8 +35,27 @@ R packages needed for this assignment: "xlsx" or "readxl", "ggplot2", "forecast"
 Consider the same data you used for A3 from the spreadsheet "Table_10.1_Renewable_Energy_Production_and_Consumption_by_Source.xlsx". The data comes from the US Energy Information and Administration and corresponds to the January 2021 Monthly Energy Review. **For this assignment you will work only with the column "Total Renewable Energy Production"**. 
 
 ```{r message=FALSE, warning=FALSE}
-#Importing data set - you may copy your code from A3
+#Importing data set - code copied from A3
+getwd()
+energy_data <- read.xlsx(xlsxFile="./Data/Table_10.1_Renewable_Energy_Production_and_Consumption_by_Source.xlsx",
+                         sheet="Monthly Data",
+                         startRow=13,
+                         colNames=FALSE)
 
+read_colnames <- read.xlsx(xlsxFile="./Data/Table_10.1_Renewable_Energy_Production_and_Consumption_by_Source.xlsx",
+                         sheet="Monthly Data",
+                         rows=11,
+                         colNames=FALSE)
+
+energy_data[,1] <- as.Date(energy_data[,1], origin = "1899-12-30")
+
+colnames(energy_data) <- read_colnames
+
+energy_data_trim <- energy_data[,c("Month", "Total Renewable Energy Production")]
+
+n_obs <- nrow(energy_data_trim)
+
+ts_energy_data <- ts(energy_data_trim[,2], start = c(1973, 1), frequency = 12)
 
 ```
 
