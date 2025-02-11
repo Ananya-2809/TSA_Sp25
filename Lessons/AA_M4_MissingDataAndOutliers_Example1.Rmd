@@ -101,6 +101,9 @@ The random component is the time series without seasonal and trend component. Le
 
 ```{r}
 #Using R decompose function
+#decompose (can choose additive or multiplicative format) or STL (seasonal-trend-linear?)
+#uses the moving average method for calculating the trend
+
 iHP=1
 decompose_inflow_data <- decompose(ts_inflow_data[,iHP],"additive")
 plot(decompose_inflow_data)
@@ -112,6 +115,7 @@ sd_inflow <- sd(inflow_random)
 
 cat(mean_inflow,sd_inflow)
 #Note random series has some missing values, that is why we got NAs
+#The NA's come from the trend component as it is using a centered moving average (so, we lose the first and last 6 months).. thus, the random component has the NA's too
 
 #Compute mean and standard deviation without missing values
 mean_inflow <- mean(na.exclude(inflow_random))  #exclude NA or missing observation to compute mean and std
@@ -154,9 +158,11 @@ Data is ready!
 
 ```{r}
 #Generating a box plot by factor where factor is month of the year
+#boxplot for each month even after removing the seasonal component
 ggplot(df_inflow_random, aes(x=month, y=inflow)) +
             geom_boxplot()
 
+#lines for the interquartile range
 ggplot(df_inflow_random, aes(x=date, y=inflow)) +
             geom_line() +
             geom_abline(slope=0,intercept=3*sd_inflow,color="red") +
@@ -198,7 +204,7 @@ outlier(df_inflow_random$inflow)
                   
 #Function chisq.out.test check if extreme value is outlier
 grubbs_test <- grubbs.test(df_inflow_random$inflow)
-print(grubbs_test) #look at the p-value to find the decision 
+print(grubbs_test) #look at the p-value to find the decision - test the statistical significance
 
 #If you need to remove outlier use rm.outlier()
 df_inflow_random$inflow <- rm.outlier(df_inflow_random$inflow,fill=TRUE) #using fill equal true the value will be replaced by mean or median 
@@ -223,6 +229,8 @@ If you want to take of all outliers and missing data at once you may use functio
 ts_inflow_random <- ts(inflow_random,frequency=12,start=c(1931,1))
 
 clean_inflow_random <- tsclean(ts_inflow_random)
+#all the values outside the red lines in the above plot were replaced using tsclean
+#this just looks at the +/- 3 std.dev. and not statistical significance of the outliers
 
 autoplot(ts_inflow_random,series="Random")+
   autolayer(clean_inflow_random,series="Cleaned")
