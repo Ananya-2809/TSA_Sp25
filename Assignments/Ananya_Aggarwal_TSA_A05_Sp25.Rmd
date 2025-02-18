@@ -1,7 +1,7 @@
 ---
 title: "ENV 797 - Time Series Analysis for Energy and Environment Applications | Spring 2025"
 subtitle: "Assignment 5 - Due date 02/18/25"
-author: "Student Name"
+author: "Ananya Aggarwal"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
@@ -27,6 +27,7 @@ library(tseries)
 library(ggplot2)
 library(Kendall)
 library(lubridate)
+library(openxlsx)
 library(tidyverse)  #load this package so yon clean the data frame using pipes
 
 
@@ -38,10 +39,15 @@ Consider the same data you used for A04 from the spreadsheet "Table_10.1_Renewab
 
 ```{r}
 #Importing data set - using xlsx package
-energy_data <- read.xlsx(file="./Data/Table_10.1_Renewable_Energy_Production_and_Consumption_by_Source.xlsx",header=FALSE,startRow = 13,sheetIndex=1) #startRow is equivalent to skip on read.table
+energy_data <- read.xlsx(xlsxFile="./Data/Table_10.1_Renewable_Energy_Production_and_Consumption_by_Source.xlsx",
+                         sheet="Monthly Data",
+                         startRow=13,
+                         colNames=FALSE)
 
-#Now let's extract the column names from row 11 only
-read_col_names <- read.xlsx(file="./Data/Table_10.1_Renewable_Energy_Production_and_Consumption_by_Source.xlsx",header=FALSE,startRow = 11,endRow=11,sheetIndex=1)
+read_col_names <- read.xlsx(xlsxFile="./Data/Table_10.1_Renewable_Energy_Production_and_Consumption_by_Source.xlsx",
+                         sheet="Monthly Data",
+                         rows=11,
+                         colNames=FALSE)
 
 colnames(energy_data) <- read_col_names
 head(energy_data)
