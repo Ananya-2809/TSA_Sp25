@@ -170,10 +170,14 @@ We will try these models on the original dataset and the deaseason electricity p
 
 ```{r}
 # Model 5: Simple moving average on deseasonal data
-
+SMA_deseas <- smooth::sma(deseasonal_allsectors_price,
+                          h = 36, holdout = FALSE, silent = FALSE)
+plot(SMA_deseas)
 
 # Model 6: Simple moving average on original data
-
+SMA_seas <- smooth::sma(ts_electricity_price[,"All.sectors"],
+                          h = 36, holdout = FALSE, silent = FALSE)
+plot(SMA_seas)
 
 # Model 7:  Simple exponential smoothing on deseasonal data
 
@@ -195,10 +199,13 @@ When forecasting with ARIMA models, first you will need to fit the model with th
 
 ```{r}
 
-# Model 9:  SARIMA on original data
+# Model 9:  SARIMA on original data - best model for this purpose (Forecasting the trend and seasonality)
+#compare the matrices instead of doing it visually
+SARIMA_seas <- auto.arima(ts_electricity_price[,"All.sectors"])
+print(SARIMA_seas)
 
-
-
+SARIMA_forecast <- forecast(SARIMA_seas, h = 36)
+plot(SARIMA_forecast)
 
 # Model 10:  ARIMA on deseasonal data
 
