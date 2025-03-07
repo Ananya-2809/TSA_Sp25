@@ -1,8 +1,11 @@
 ---
-title: "ENV 797 - Time Series Analysis for Energy and Environment Applications | Spring 2025"
-subtitle: "Assignment 7 - Due date 03/06/25"
-author: "Student Name"
-output: pdf_document
+title: ENV 797 - Time Series Analysis for Energy and Environment Applications | Spring
+  2025
+author: "Ananya Aggarwal"
+subtitle: Assignment 7 - Due date 03/06/25
+output:
+  html_document:
+    df_print: paged
 geometry: margin=2.54cm
 ---
 
@@ -22,6 +25,20 @@ Packages needed for this assignment: "forecast","tseries". Do not forget to load
 
 ```{r}
 #Load/install required package here
+library(lubridate)
+library(ggplot2)
+library(tseries)
+library(forecast)
+library(outliers)
+library(Kendall)
+library(cowplot)
+library(tidyverse)
+
+#setting the theme
+mytheme <- theme_minimal(base_size = 10) + 
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = "bottom")
+theme_set(mytheme)
 
 ```
 
@@ -32,9 +49,35 @@ Consider the data from the file "Net_generation_United_States_all_sectors_monthl
 
 ### Q1
 
-Import the csv file and create a time series object for natural gas. Make you sure you specify the **start=** and **frequency=** arguments. Plot the time series over time, ACF and PACF.
+Import the csv file and create a time series object for natural gas. Make sure you specify the **start=** and **frequency=** arguments. Plot the time series over time, ACF and PACF.
 
-```{r}
+```{r, fig.height=8, fig.width=8}
+getwd()
+net_generation_all <- read.csv(file = "../Data/Net_generation_United_States_all_sectors_monthly.csv",
+                               header = TRUE, skip = 4)
+head(net_generation_all)
+#the data is saved in a reverse order, starting with 2020
+n_var <- ncol(net_generation_all) - 1
+n_obs <- nrow(net_generation_all)
+
+summary(net_generation_all)
+
+#extracting the data for natural gas only
+net_generation_gas <- net_generation_all %>%
+  select(Month, natural.gas.thousand.megawatthours) %>%
+  mutate(Month = my(Month)) %>%
+  arrange(Month)
+
+ts_netgen_gas <- ts(net_generation_gas[,2], start = c(2001,1), frequency = 12)
+
+netgen_gas_plot <- autoplot(ts_netgen_gas) + 
+  ggtitle("Monthly Net Generation from Natural Gas (2001-2020)") +
+  xlab("Year") + ylab("Net Generation (MWh)")
+
+netgen_gas_ACF <- ggAcf(ts_netgen_gas, lag.max = 60) + ggtitle("ACF of Natural Gas Generation")
+netgen_gas_PACF <- ggPacf(ts_netgen_gas, lag.max = 60) + ggtitle("PACF of Natural Gas Generation")
+
+plot_grid(netgen_gas_plot, netgen_gas_ACF, netgen_gas_PACF, ncol=1)
 
 ```
 
@@ -42,9 +85,31 @@ Import the csv file and create a time series object for natural gas. Make you su
 
 Using the $decompose()$ and the $seasadj()$ functions create a series without the seasonal component, i.e., a deseasonalized natural gas series. Plot the deseasonalized series over time and corresponding ACF and PACF. Compare with the plots obtained in Q1.
 
-```{r}
+```{r, fig.height=8, fig.width=10}
+
+decomp_netgen_gas <- decompose(ts_netgen_gas)
+plot(decomp_netgen_gas)
+
+deseas_netgen_gas <- seasadj(decomp_netgen_gas)
+deseas_gas_plot <- autoplot(deseas_netgen_gas)+
+  ggtitle("Deseasoned Net Generation from Natural Gas (2001-2020)") +
+  xlab("Year") + ylab("Net Generation (MWh)")
+
+deseas_gas_ACF <- ggAcf(deseas_netgen_gas, lag.max = 60) + ggtitle("ACF of Deseasoned Natural Gas Generation")
+deseas_gas_PACF <- ggPacf(deseas_netgen_gas, lag.max = 60) + ggtitle("PACF of Deseasoned Natural Gas Generation")
+
+plot_grid(netgen_gas_plot, deseas_gas_plot, netgen_gas_ACF, deseas_gas_ACF, netgen_gas_PACF, deseas_gas_PACF, ncol=2)
 
 ```
+
+> Answer: 
+
+> Time Series - The original time series shows an increasing trend with a strong seasonal patterns. The deseasoned time series gets rid of these peaks and troughs, leaving only the underlying upward trend and random variations. 
+
+> ACF - The ACF of the original series is decaying over time, however, it has significant spikes at regular lags, reflecting the seasonal cycles. Thus, when the seasonal component is removed in the deseasoned series, the wave pattern disappears and we only see the decaying trend over time in ACF.
+
+> PACF - The PACF of the original series shows a slight wave pattern in the first year (i.e. first 12 lags) with significant spikes at lag 1 and lag 13 representing the monthly seasonal patterns. The PACF of the deseasoned series has fewer significant spikes, except for at lag 1, suggesting that most of the seasonality has been removed.
+
 
 ## Modeling the seasonally adjusted or deseasonalized series
 
@@ -53,14 +118,33 @@ Using the $decompose()$ and the $seasadj()$ functions create a series without th
 Run the ADF test and Mann Kendall test on the deseasonalized data from Q2. Report and explain the results.
 
 ```{r}
+print("ADF Test Summary")
+print(adf.test(deseas_netgen_gas,alternative="stationary"))
+print("Mann Kendall Test Summary")
+print(MannKendall(deseas_netgen_gas))
 
 ```
+
+> Answer: The p-value (=0.01) is lower than 0.05, which is why we reject the null hypothesis of non-stationarity. This means that the deseasoned time series is stationary, i.e., it does not have a unit root.
+The high positive value of 0.843 from the Mann Kendall test indicates a strong positive trend in the data, which we saw from the graph as well. And the extremely low p-value confirms the statistical significance of this trend.
+These two results indicate that while the mean changes over time due to the trend, the deviations from this trend are temporary, and the series returns to its long-run mean over time.
+
 
 ### Q4
 
 Using the plots from Q2 and test results from Q3 identify the ARIMA model parameters $p,d$ and $q$. Note that in this case because you removed the seasonal component prior to identifying the model you don't need to worry about seasonal component. Clearly state your criteria and any additional function in R you might use. DO NOT use the $auto.arima()$ function. You will be evaluated on ability to understand the ACF/PACF plots and interpret the test results.
 
+> Answer: The ADF test indicates that the time series is stationary, meaning no further differencing is required (d = 0). We can use the ndiffs function to confirm this. From the ACF and PACF plots of the deseasoned series, it seems to be an autoregressive model where the ACF is decaying over time with no sharp cutoffs, and the PACF has a significant spike at lag 1 and then cuts off. Thus, the order would be 1 (p = 1). I do not see any points that indicate that the series has a moving average component.
+
 ```{r}
+
+ndiffs(deseas_netgen_gas)
+
+p <- 1
+d <- ndiffs(deseas_netgen_gas)
+q <- 0
+
+cat("Estimated ARIMA order: ARIMA(", p, ",", d, ",", q, ")\n")
 
 ```
 
@@ -70,11 +154,23 @@ Use `Arima()` from package "forecast" to fit an ARIMA model to your series consi
 
 ```{r}
 
+arima_netgen_gas <- Arima(deseas_netgen_gas, order = c(p,d,q), include.mean = TRUE, include.drift = TRUE)
+print(arima_netgen_gas)
+
 ```
 
 ### Q6
 
 Now plot the residuals of the ARIMA fit from Q5 along with residuals ACF and PACF on the same window. You may use the $checkresiduals()$ function to automatically generate the three plots. Do the residual series look like a white noise series? Why?
+
+```{r}
+
+checkresiduals(arima_netgen_gas)
+
+```
+
+> Answer: Yes, the residuals series looks random, i.e., showing no clear patterns as they fluctuate around zero. There appear to be some outliers with some spikes reaching 20000. The ACF of the residuals mostly falls within the confidence bounds, indicating that the residual autocorrelations are low. 
+
 
 ## Modeling the original series (with seasonality)
 
@@ -82,9 +178,48 @@ Now plot the residuals of the ARIMA fit from Q5 along with residuals ACF and PAC
 
 Repeat Q3-Q6 for the original series (the complete series that has the seasonal component). Note that when you model the seasonal series, you need to specify the seasonal part of the ARIMA model as well, i.e., $P$, $D$ and $Q$.
 
-```{r}
+> Answer: The ADF test indicates that the time series is stationary, meaning no further differencing is required (d = 0). However, there is strong seasonality in the time series plot, meaning seasonal differencing (D) may still be necessary. Also, as seen with the deseasoned series, the nsdiffs function will confirm this. The ACF plot of the original series shows strong seasonal patterns with spikes at lags 12,24,36 etc. In order to determine the model parameters, we will have to difference the series and look at those ACF & PACF plots.
+From the ACF and PACF plots, we see that there is negative spike in ACF at lag 12, and negative spikes in pACF at lag 12,24. This tells us that Q = 1, which means P = 0, as P+Q should not be more than 1.
+
+```{r, fig.height=5, fig.width=10}
+#conducting the tests
+print("ADF Test Summary")
+print(adf.test(ts_netgen_gas,alternative="stationary"))
+print("Mann Kendall Test Summary")
+print(MannKendall(ts_netgen_gas))
+
+#confirming if the series needs to be differenced using ndsiffs
+print("Number of times to difference")
+nsdiffs(ts_netgen_gas)
+
+#differencing the series for both trend and seasonality to check the ACF and PACF plots
+diff_trend_netgen_gas <- diff(ts_netgen_gas,lag=1, differences=1)
+diff_both_netgen_gas <- diff(diff_trend_netgen_gas, lag=12, differences=1)
+
+diff_gas_ACF <- ggAcf(diff_both_netgen_gas, lag.max = 60) + ggtitle("ACF of Twice-Differenced Natural Gas Generation")
+diff_gas_PACF <- ggPacf(diff_both_netgen_gas, lag.max = 60) + ggtitle("PACF of Twice-Differenced Natural Gas Generation")
+
+plot_grid(diff_gas_ACF, diff_gas_PACF)
+
+#defining the model parameters and fitting in SARIMA model
+p_orig <- 1
+d_orig <- ndiffs(ts_netgen_gas) #we difference for both trend and seasonality
+q_orig <- 0
+P <- 0
+D <- nsdiffs(ts_netgen_gas)
+Q <- 1
+s <- 12 # monthly seasonality
+
+sarima_netgen_gas <- Arima(ts_netgen_gas, order = c(p_orig, d_orig, q_orig), 
+                           seasonal = c(P,Q,D), include.mean = TRUE, include.drift = TRUE)
+print(sarima_netgen_gas)
+
+checkresiduals(sarima_netgen_gas)
+
 
 ```
+
+> Answer: The residuals series looks random, i.e., showing no clear patterns as they fluctuate around zero. There appear to be some outliers with some spikes reaching 20000, however fewer than we saw with the ARIMA model. The ACF of the residuals falls within the confidence bounds for almost the entire time period, indicating that the residual autocorrelations are insignificant.
 
 
 ### Q8
@@ -93,7 +228,14 @@ Compare the residual series for Q7 and Q6. Can you tell which ARIMA model is bet
 
 ```{r}
 
+autoplot(residuals(arima_netgen_gas), series = "Deseasonalized") +
+  autolayer(residuals(sarima_netgen_gas), series = "Original") +
+  ggtitle("Comparison of Residuals") +
+  xlab("Time") + ylab("Residuals") +
+  theme(legend.position = "bottom")
+
 ```
+> Answer: The graph seems to show that the SARIMA model has lower variability with smaller magnitude of the spikes, especially in the near-term. Thus, the Seasonal ARIMA performs better given that we incorporated a seasonal differencing and a seasonal moving average component as well. In the long-term, both the models seem to be a good fit as we removed the seasonal componnent when we plotted the graphs in Q6. Also, they both center around zero, which is expected for a well-fitted model.
 
 
 ## Checking your model with the auto.arima()
@@ -106,7 +248,11 @@ Use the $auto.arima()$ command on the **deseasonalized series** to let R choose 
 
 ```{r}
 
+auto_arima_deseas_gas <- auto.arima(deseas_netgen_gas)
+print(auto_arima_deseas_gas)
+
 ```
+> Answer: The autoregressive order of the best ARIMA model determined by the function, which matches what I concluded in Q4. However, it also indicates a moving average order of 1.
 
 
 ### Q10
@@ -115,5 +261,11 @@ Use the $auto.arima()$ command on the **original series** to let R choose the mo
 
 ```{r}
 
+auto_arima_orig_gas <- auto.arima(ts_netgen_gas)
+print(auto_arima_orig_gas)
+
 ```
+
+> Answer: The key difference is that the auto.arima function did not apply the regular difference (d=0), whereas I assumed that differencing based on the ndiffs output. The summary from the auto.arima function also includes the drift term that accounts for a deterministic trend in the data, which I happened to remove using d=1.
+
 
