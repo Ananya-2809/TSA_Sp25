@@ -134,7 +134,7 @@ SNAIVE_seas <- snaive(ts_electricity_price[,"All.sectors"], h=12)
 checkresiduals(SNAIVE_seas)
 ```
 
-> Comments: The residuals for the seasonal naive don't show any seasonal patterns. Recall the model repeats the observation that happen in a previous seasonal lag (in this case one year ago). The residuals series show a strong autoregressive component which is not desired.
+> Comments: The residuals for the seasonal naive don't show any seasonal patterns. Recall the model repeats the observation that happen in a previous seasonal lag (in this case one year ago). The residuals series show a strong autoregressive component which is not desired. A bias in the positive direction. Long-memory property - some trend component.
 
 ### Model 3: SARIMA
 ```{r}
@@ -196,6 +196,7 @@ plot(SARIMA_for)
 ### Compare performance metrics
 
 Now we will create a data frame that combines performance metrics for all the three models. You can choose one metric to help you choose among models. For example let's say we want the model with lowest RMSE.
+#ACF not calculated as we're only providing 12 data points - not enough for determining autoregression
 
 ```{r}
 #create data frame
